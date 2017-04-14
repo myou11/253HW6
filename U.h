@@ -25,17 +25,11 @@ class U {
 		// Dtor
 		~U();
 
-		// decodes UTF8 into Unicode
-		int convUTF(int byte1, std::string charsRead, unsigned int &index) const;
-
 		// modified convUTF for reading from a stream and checking valid chars
 		void readUTF(int byte1, std::ifstream &in, std::string filename);
 
 		// Read characters from an input file
 		void readfile(std::string filename);
-
-		// Parse and store properties from a properties file
-		void propfile(std::string filename);
 
 		// State how many characters read thus far
 		int size() const;
@@ -52,18 +46,9 @@ class U {
 		// Get chars from start to end
 		std::string get(int start, int end) const;
 
-		// Find occurence of a property
-		int propcount(std::string prop) const;
-
-		// State all possible properties
-		std::set<std::string> props() const;
-
 	private:
 
 		std::string charsRead; 		// stores all characters read thus far
-		std::map<int, std::string> propsMap;	// stores unicode and properties from propfile
-		std::set<std::string> propsSet;	// stores properties from propfile
-		bool propOpened = false;	// bool to ensure propfile is only called once
 };
 
 #endif
