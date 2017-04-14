@@ -6,8 +6,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string>
 
-using std namespace;
+using namespace std;
 
 // Default ctor
 P::P() { /* Do nothing */ }
