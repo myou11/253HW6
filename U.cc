@@ -13,24 +13,12 @@ using namespace std;
 U::U() : charsRead("") { }	// initialized charsRead to be empty
 
 // Copy ctor
-U::U(const U &rhs) : 
-	charsRead(rhs.charsRead), propsMap(rhs.propsMap), 		// copy all rhs's class members (private vars) to
-	propsSet(rhs.propsSet), propOpened(rhs.propOpened) { }	// the obj being constructed currently
-																													
-
-// Test ctor
-U::U(string propFile, string data) { 
-	propfile(propFile);
-	charsRead += data;
-}
+U::U(const U &rhs) : charsRead(rhs.charsRead) { } 	// copy all rhs's class members (private vars) to
 
 // Assignment operator=
 const U &U::operator=(const U &rhs) {
 	if (this != &rhs) {		// rhs by itself is the actual object, but with the & (&rhs), it get the pointer to rhs, which is also what this is (a pointer to the object)
 		charsRead = rhs.charsRead;		// assign contents of rhs's charsRead to this object
-		propsMap = rhs.propsMap;		// assign contents of rhs's propsMap to this object
-		propOpened = rhs.propOpened;	// assign bool val of rhs's propOpened to this object
-		propsSet = rhs.propsSet;		// assign contents of rhs's propsSet to this object
 	}
 	return *this; // this is just a pointer, *this is the actual object
 }
@@ -409,8 +397,8 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 
 // Return the codepoint at charsRead[index]
 int U::codepoint(int index) const {
-	string charac = charsRead.get(index);
-	return convUTF(charac.at(0);
+	string charac = get(index);
+	return convUTF(charac.at(0));
 }
 
 // Return true if charsRead is empty

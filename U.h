@@ -50,7 +50,7 @@ class U {
 		std::string get(int start, int end) const;
 
 		// Convert UTF8 encoding to Unicode
-		int convUTF(int byte1);
+		int convUTF(int byte1) const;
 
 		// Return the Unicode codepoint at the index in the accumulated string
 		int codepoint(int index) const;
