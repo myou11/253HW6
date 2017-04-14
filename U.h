@@ -31,6 +31,9 @@ class U {
 		// Read characters from an input file
 		void readfile(std::string filename);
 
+		// Adds string to accumulated string
+		void append(std::string extra);
+
 		// State how many characters read thus far
 		int size() const;
 
@@ -45,6 +48,18 @@ class U {
 
 		// Get chars from start to end
 		std::string get(int start, int end) const;
+
+		// Convert UTF8 encoding to Unicode
+		int convUTF(int byte1);
+
+		// Return the Unicode codepoint at the index in the accumulated string
+		int codepoint(int index) const;
+
+		// Return true if accumulated string is empty
+		bool empty() const;
+
+		// Removes all data from the obj
+		void clear();
 
 	private:
 

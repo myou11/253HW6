@@ -52,6 +52,12 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 		
 		in.get(c);
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 2 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+		
 		int byte2 = c;
 		if ( (byte2 & 0xC0) != 0x80 ) {
 			ostringstream oss;
@@ -66,6 +72,12 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 		
 		in.get(c);
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 2 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+
 		int byte2 = c;
 		if ( (byte2 & 0xC0) != 0x80 ) {
 			ostringstream oss;
@@ -75,6 +87,12 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += c;
 
 		in.get(c);
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 3 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+
 		int byte3 = c;
 		if ( (byte3 & 0xC0) != 0x80 ) {
 			ostringstream oss;
@@ -89,6 +107,12 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 
 		in.get(c);
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 2 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+		
 		int byte2 = c;
 		if ( (byte2 & 0xC0) != 0x80 ) {
 			ostringstream oss;
@@ -98,6 +122,12 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += c;
 
 		in.get(c);
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 3 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+
 		int byte3 = c;
 		if ( (byte3 & 0xC0) != 0x80 ) {
 			ostringstream oss;
@@ -107,6 +137,12 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += c;
 
 		in.get(c);
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 4 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+		
 		int byte4 = c;
 		if ( (byte4 & 0xC0) != 0x80 ) {
 			ostringstream oss;
@@ -135,9 +171,19 @@ void U::readfile(string filename) {
 
 	char c;
 	while(in.get(c)) {
+		if (in.fail()) {
+			ostringstream oss;
+			oss << "Byte 1 was unable to be retrieved (doesn't exist) in file: " << filename;
+			throw oss.str();
+		}
+		
 		readUTF(c, in, filename);
 	}
 	in.close();
+}
+
+void U::append(string extra) {
+	charsRead += extra;
 }
 
 // State how many characters read thus far
@@ -271,4 +317,108 @@ string U::get(int start, int end) const {
 	}
 
 	return res;
+}
+
+int U::convUTF(int byte1) const {	// index is passed by reference because it will change the actual value of index
+																			// in the loop this function will be called in
+	char c; // to get the additional UTF bytes
+
+	if ( (byte1 & 0x80) == 0 ) 
+		return (byte1 & 0x7F);
+
+	if ( (byte1 & 0xE0) == 0xC0 ) {
+		c = charsRead.at(1);
+		int byte2 = c;
+
+		if ( (byte2 & 0xC0) != 0x80) {
+			ostringstream oss;
+			oss << "0x" << hex << byte2 << " was not a valid continuation byte";
+			throw oss.str();
+		}
+
+		byte1 = (byte1 << 6) & 0x7C0;
+		byte2 = byte2 & 0x3F;
+
+		return (byte1 | byte2);
+	}
+
+	if ( (byte1 & 0xF0) == 0xE0) {
+		c = charsRead.at(1);
+		int byte2 = c;
+
+		if ( (byte2 & 0xC0) != 0x80 ) {
+			ostringstream oss;
+			oss << "0x" << hex << byte2 << " was not a valid continuation byte";
+			throw oss.str();
+		}
+
+		c = charsRead.at(2);
+		int byte3 = c;
+
+		if ( (byte3 & 0xC0) != 0x80 ) {
+			ostringstream oss;
+			oss << "0x" << hex << byte3 << " was not a valid continuation byte";
+			throw oss.str();
+		}
+
+		byte1 = (byte1 << 12) & 0xF000; // shift to bits 15-12, mask upper 4 bits
+		byte2 = (byte2 << 6) & 0xFC0;   // shift to bits 11-6, mask bits 12-7
+		byte3 = byte3 & 0x3F;			// shift to bits 5-0, mask bits 5-0
+
+		return (byte1 | byte2 | byte3); // combine the 3 bytes to get unicode
+	}
+
+	if ( (byte1 & 0xF8) == 0xF0 ) {
+		c = charsRead.at(1);
+		int byte2 = c;
+	
+		if ( (byte2 & 0xC0) != 0x80 ) {
+			ostringstream oss;
+			oss << "0x" << hex << byte2 << " was not a valid continuation byte";
+			throw oss.str();
+		}
+
+		c = charsRead.at(2);
+		int byte3 = c;
+		
+		if ( (byte3 & 0xC0) != 0x80 ) {
+			ostringstream oss;
+			oss << "0x" << hex << byte3 << " was not a valid continuation byte";
+			throw oss.str();
+		}
+
+		c = charsRead.at(3);
+		int byte4 = c;
+
+		if ( (byte4 & 0xC0) != 0x80 ) {
+			ostringstream oss;
+			oss << "0x" << hex << byte4 << " was not a valid continuation byte";
+			throw oss.str();
+		}
+
+		byte1 = (byte1 & 0x07) << 18; // get lower 3 bits of 1st byte, shift to bits 20-18
+		byte2 = (byte2 & 0x3F) << 12; // get lower 6 bits of 2nd byte, shift to bits 17-12
+		byte3 = (byte3 & 0x3F) << 6;  // get lower 6 bits of 3rd byte, shift to bits 11-6
+		byte4 = byte4 & 0x3F;		  // get lower 6 bits of 4th byte, shift to bits 5-0
+		
+		return (byte1 | byte2 | byte3 | byte4); // combine the 4 bytes to get unicode
+	}
+
+	return -1; // return -1 if not a valid unicode character
+}
+
+// Return the codepoint at charsRead[index]
+int U::codepoint(int index) const {
+	string charac = charsRead.get(index);
+	return convUTF(charac.at(0);
+}
+
+// Return true if charsRead is empty
+bool U::empty() const {
+	return (charsRead.length() == 0);
+}
+
+// Clear charsRead
+void U::clear() {
+	charsRead = "";
 }
