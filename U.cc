@@ -307,7 +307,7 @@ string U::get(int start, int end) const {
 	return res;
 }
 
-int U::convUTF(int byte1) const {	// index is passed by reference because it will change the actual value of index
+int U::convUTF(int byte1, string charac) const {	// index is passed by reference because it will change the actual value of index
 																			// in the loop this function will be called in
 	char c; // to get the additional UTF bytes
 
@@ -315,7 +315,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 		return (byte1 & 0x7F);
 
 	if ( (byte1 & 0xE0) == 0xC0 ) {
-		c = charsRead.at(1);
+		c = charac.at(1);
 		int byte2 = c;
 
 		if ( (byte2 & 0xC0) != 0x80) {
@@ -331,7 +331,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 	}
 
 	if ( (byte1 & 0xF0) == 0xE0) {
-		c = charsRead.at(1);
+		c = charac.at(1);
 		int byte2 = c;
 
 		if ( (byte2 & 0xC0) != 0x80 ) {
@@ -340,7 +340,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 			throw oss.str();
 		}
 
-		c = charsRead.at(2);
+		c = charac.at(2);
 		int byte3 = c;
 
 		if ( (byte3 & 0xC0) != 0x80 ) {
@@ -357,7 +357,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 	}
 
 	if ( (byte1 & 0xF8) == 0xF0 ) {
-		c = charsRead.at(1);
+		c = charac.at(1);
 		int byte2 = c;
 	
 		if ( (byte2 & 0xC0) != 0x80 ) {
@@ -366,7 +366,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 			throw oss.str();
 		}
 
-		c = charsRead.at(2);
+		c = charac.at(2);
 		int byte3 = c;
 		
 		if ( (byte3 & 0xC0) != 0x80 ) {
@@ -375,7 +375,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 			throw oss.str();
 		}
 
-		c = charsRead.at(3);
+		c = charac.at(3);
 		int byte4 = c;
 
 		if ( (byte4 & 0xC0) != 0x80 ) {
@@ -398,7 +398,7 @@ int U::convUTF(int byte1) const {	// index is passed by reference because it wil
 // Return the codepoint at charsRead[index]
 int U::codepoint(int index) const {
 	string charac = get(index);
-	return convUTF(charac.at(0));
+	return convUTF(charac.at(0), charac);
 }
 
 // Return true if charsRead is empty
