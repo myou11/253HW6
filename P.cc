@@ -84,20 +84,18 @@ void P::readfile(string filename) {
 }
 
 // Count occurences of a codepoint's property
-int P::count(int codepoint) const {
-	int count = 0;
-
+void P::count(int codepoint) {
 	if (propsMap.count(codepoint) == 0)	// codepoint is not in propsMap, so no need to look through it
-		return count;
+		return;
 
-	string prop = propsMap[codepoint];	// get prop assoc with codepoint
+	string prop = propsMap.at(codepoint);	// get prop assoc with codepoint
 
 	++countMap[prop];	// increment count of prop
 }
 
 // Count occurences of times that characters with prop have been encountered
 int P::count(string prop) const {
-	return countMap[prop];
+	return countMap.at(prop);
 }
 
 // Returns number of unique properties read
