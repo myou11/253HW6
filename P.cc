@@ -84,6 +84,7 @@ void P::readfile(string filename) {
 }
 
 // Count occurences of a codepoint's property
+// TODO: CHANGE THIS BACK TO CONST MOST LIKELY, BUT WILL HAVE TO FIGURE OUT A DIFFERENT WAY TO COUNT PROPERTIES
 void P::count(int codepoint) {
 	if (propsMap.count(codepoint) == 0)	// codepoint is not in propsMap, so no need to look through it
 		return;
