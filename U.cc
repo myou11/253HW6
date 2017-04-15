@@ -15,6 +15,12 @@ U::U() : charsRead("") { }	// initialized charsRead to be empty
 // Copy ctor
 U::U(const U &rhs) : charsRead(rhs.charsRead) { } 	// copy all rhs's class members (private vars) to
 
+// Filename ctor
+U::U(string filename) {
+	charsRead = "";
+	readfile(filename);
+}
+
 // Assignment operator=
 const U &U::operator=(const U &rhs) {
 	if (this != &rhs) {		// rhs by itself is the actual object, but with the & (&rhs), it get the pointer to rhs, which is also what this is (a pointer to the object)

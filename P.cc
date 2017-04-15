@@ -24,6 +24,10 @@ P::P(string filename) {
 // Dtor
 P::~P() { }
 
+set<string> P::props() const {
+	return propsSet;
+}
+
 // Parse and store properties from a properties file
 void P::readfile(string filename) {
 	if (propOpened) {
@@ -84,7 +88,6 @@ void P::readfile(string filename) {
 }
 
 // Count occurences of a codepoint's property
-// TODO: CHANGE THIS BACK TO CONST MOST LIKELY, BUT WILL HAVE TO FIGURE OUT A DIFFERENT WAY TO COUNT PROPERTIES
 void P::count(int codepoint) {
 	if (propsMap.count(codepoint) == 0)	// codepoint is not in propsMap, so no need to look through it
 		return;

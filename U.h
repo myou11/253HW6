@@ -17,7 +17,7 @@ class U {
 		// Ctors
 		U();
 		U(const U &rhs);
-		U(std::string propfile, std::string data);
+		U(std::string filename);
 
 		// Assignment operator=
 		const U &operator=(const U &rhs);
