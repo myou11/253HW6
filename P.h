@@ -29,7 +29,7 @@ class P {
 		std::set<std::string> props() const;
 
 		// Increments running count of prop assoc with the codepoint (if prop exists) 
-		void count(int codepoint) const;
+		void count(int codepoint);
 
 		// Returns occurences of times that characters with prop have been encountered
 		int count(std::string prop) const;
