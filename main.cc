@@ -116,6 +116,11 @@ int main() {
 		cout << "Size should be 0: " << p.size() << '\n';
 		cout << "Should be empty (true): " << p.empty() << '\n';
 
+		// testing hamlet
+		cout << "Testing hamlet\n";
+		U ham = U(pub + "hamlet.txt");
+		cout << "Should be 182568: " << ham.size() << '\n';
+
 		return 0;
 	}
 	catch (const string &msg) {

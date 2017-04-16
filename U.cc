@@ -32,6 +32,24 @@ const U &U::operator=(const U &rhs) {
 // Dtor
 U::~U( ) { }
 
+// Error check ifstream for failure
+void U::streamFail(ifstream &in, int byteNum, string filename) {
+	if (in.fail()) {
+		ostringstream oss;
+		oss << "Byte " << byteNum << " was unable to be retrieved (doesn't exist) in file: " << filename;
+		throw oss.str();
+	}
+}
+
+// Error check for invalid continuation byte
+void U::contByteFail(int byte, string filename) {
+	if ( (byte & 0xC0) != 0x80 ) {
+		ostringstream oss;
+		oss << "0x" << hex << byte << " was not a valid continuation byte in file: " << filename;
+		throw oss.str();
+	}
+}
+
 // Read and check for valid UTF8 characters
 void U::readUTF(int byte1, ifstream &in, string filename) {
 	char fbyte = byte1;	// used to concatenate first byte to the charsRead string
@@ -46,18 +64,9 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 		
 		in.get(c);
-		if (in.fail()) {
-			ostringstream oss;
-			oss << "Byte 2 was unable to be retrieved (doesn't exist) in file: " << filename;
-			throw oss.str();
-		}
-		
+		streamFail(in, 2, filename);	// check if the stream failed to get a character
 		int byte2 = c;
-		if ( (byte2 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte2 << " was not a valid continuation byte in file: " << filename;
-			throw oss.str();
-		}
+		contByteFail(byte2, filename);	// check if this is a valid continuation byte
 		charsRead += c;
 	}
 
@@ -66,33 +75,15 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 		
 		in.get(c);
-		if (in.fail()) {
-			ostringstream oss;
-			oss << "Byte 2 was unable to be retrieved (doesn't exist) in file: " << filename;
-			throw oss.str();
-		}
-
+		streamFail(in, 2, filename);	
 		int byte2 = c;
-		if ( (byte2 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte2 << " was not a valid continuation byte in file: " << filename;
-			throw oss.str();
-		}
+		contByteFail(byte2, filename);
 		charsRead += c;
 
 		in.get(c);
-		if (in.fail()) {
-			ostringstream oss;
-			oss << "Byte 3 was unable to be retrieved (doesn't exist) in file: " << filename;
-			throw oss.str();
-		}
-
+		streamFail(in, 3, filename);
 		int byte3 = c;
-		if ( (byte3 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte3 << " was not a valid continuation byte in file: " << filename;
-			throw oss.str();
-		}
+		contByteFail(byte3, filename);
 		charsRead += c;
 	}
 
@@ -101,48 +92,21 @@ void U::readUTF(int byte1, ifstream &in, string filename) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 
 		in.get(c);
-		if (in.fail()) {
-			ostringstream oss;
-			oss << "Byte 2 was unable to be retrieved (doesn't exist) in file: " << filename;
-			throw oss.str();
-		}
-		
+		streamFail(in, 2, filename);
 		int byte2 = c;
-		if ( (byte2 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte2 << " was not a valid continuation byte in file: " << filename;
-			throw oss.str();
-		}
+		contByteFail(byte2, filename);
 		charsRead += c;
 
 		in.get(c);
-		if (in.fail()) {
-			ostringstream oss;
-			oss << "Byte 3 was unable to be retrieved (doesn't exist) in file: " << filename;
-			throw oss.str();
-		}
-
+		streamFail(in, 3, filename);
 		int byte3 = c;
-		if ( (byte3 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte3 << " was not a valid continuation byte in file: " << filename;
-			throw oss.str();
-		}
+		contByteFail(byte3, filename);
 		charsRead += c;
 
 		in.get(c);
-		if (in.fail()) {
-			ostringstream oss;
-			oss << "Byte 4 was unable to be retrieved (doesn't exist) in file: " << filename;
-			throw oss.str();
-		}
-		
+		streamFail(in, 4, filename);
 		int byte4 = c;
-		if ( (byte4 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte4 << " was not a valid continuation byte in file: " << filename;
-			throw oss.str();
-		}
+		contByteFail(byte4, filename);
 		charsRead += c;
 	}
 
@@ -324,12 +288,6 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 		c = charac.at(1);
 		int byte2 = c;
 
-		if ( (byte2 & 0xC0) != 0x80) {
-			ostringstream oss;
-			oss << "0x" << hex << byte2 << " was not a valid continuation byte";
-			throw oss.str();
-		}
-
 		byte1 = (byte1 << 6) & 0x7C0;
 		byte2 = byte2 & 0x3F;
 
@@ -340,20 +298,8 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 		c = charac.at(1);
 		int byte2 = c;
 
-		if ( (byte2 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte2 << " was not a valid continuation byte";
-			throw oss.str();
-		}
-
 		c = charac.at(2);
 		int byte3 = c;
-
-		if ( (byte3 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte3 << " was not a valid continuation byte";
-			throw oss.str();
-		}
 
 		byte1 = (byte1 << 12) & 0xF000; // shift to bits 15-12, mask upper 4 bits
 		byte2 = (byte2 << 6) & 0xFC0;   // shift to bits 11-6, mask bits 12-7
@@ -365,30 +311,12 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 	if ( (byte1 & 0xF8) == 0xF0 ) {
 		c = charac.at(1);
 		int byte2 = c;
-	
-		if ( (byte2 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte2 << " was not a valid continuation byte";
-			throw oss.str();
-		}
 
 		c = charac.at(2);
 		int byte3 = c;
-		
-		if ( (byte3 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte3 << " was not a valid continuation byte";
-			throw oss.str();
-		}
 
 		c = charac.at(3);
 		int byte4 = c;
-
-		if ( (byte4 & 0xC0) != 0x80 ) {
-			ostringstream oss;
-			oss << "0x" << hex << byte4 << " was not a valid continuation byte";
-			throw oss.str();
-		}
 
 		byte1 = (byte1 & 0x07) << 18; // get lower 3 bits of 1st byte, shift to bits 20-18
 		byte2 = (byte2 & 0x3F) << 12; // get lower 6 bits of 2nd byte, shift to bits 17-12

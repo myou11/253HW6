@@ -25,7 +25,13 @@ class U {
 		// Dtor
 		~U();
 
-		// modified convUTF for reading from a stream and checking valid chars
+		// Error check ifstream for failure
+		void streamFail(std::ifstream &in, int byteNum, std::string filename);
+
+		// Error check for invalid continuation byte
+		void contByteFail(int byte, std::string filename);
+
+		// Modified convUTF for reading from a stream and checking valid chars
 		void readUTF(int byte1, std::ifstream &in, std::string filename);
 
 		// Read characters from an input file
