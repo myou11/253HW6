@@ -13,27 +13,28 @@ using namespace std;
 U::U() : charsRead("") { }	// initialized charsRead to be empty
 
 // Copy ctor
-U::U(const U &rhs) : charsRead(rhs.charsRead) { } 	// copy all rhs's class members (private vars) to
+U::U(const U & rhs) : charsRead(rhs.charsRead), charsReadVect(rhs.charsReadVect) { } 	// copy all rhs's class members (private vars) to
 
 // Filename ctor
 U::U(string filename) {
-	charsRead = "";
-	readfile(filename);
+	charsRead = "";			// initialize string to empty string
+	readfile(filename);		// call readfile to do the work
 }
 
 // Assignment operator=
-const U &U::operator=(const U &rhs) {
-	if (this != &rhs) {		// rhs by itself is the actual object, but with the & (&rhs), it get the pointer to rhs, which is also what this is (a pointer to the object)
-		charsRead = rhs.charsRead;		// assign contents of rhs's charsRead to this object
+const U & U::operator=(const U & rhs) {
+	if (this != &rhs) {						// rhs by itself is the actual object, but with the & (& rhs), it get the pointer to rhs, which is also what this is (a pointer to the object)
+		charsRead = rhs.charsRead;			// assign contents of rhs's charsRead to this object
+		charsReadVect = rhs.charsReadVect; 	// assign contents of rhs's charsReadVect to this obj
 	}
-	return *this; // this is just a pointer, *this is the actual object
+	return *this; 							// this is just a pointer, *this is the actual object
 }
 
 // Dtor
-U::~U( ) { }
+U::~U( ) { }								// default destructor
 
 // Error check ifstream for failure
-void U::streamFail(ifstream &in, int byteNum, string filename) {
+void U::streamFail(ifstream & in, int byteNum, string filename) {
 	if (in.fail()) {
 		ostringstream oss;
 		oss << "Byte " << byteNum << " was unable to be retrieved (doesn't exist) in file: " << filename;
@@ -51,7 +52,7 @@ void U::contByteFail(int byte, string filename) {
 }
 
 // Read and check for valid UTF8 characters
-void U::readUTF(int byte1, ifstream &in, string filename) {
+void U::readUTF(int byte1, ifstream & in, string filename) {
 	char fbyte = byte1;	// used to concatenate first byte to the charsRead string
 	char c; // to get the additional UTF bytes
 
@@ -137,17 +138,40 @@ void U::readfile(string filename) {
 		
 		readUTF(c, in, filename);
 	}
-	in.close();
+
+	in.close();		// close the file stream
+
+	// Create vector from this accumulated string
+	for (uint i = 0; i < charsRead.length(); /* leave incrementing work for body of loop */) {
+		if (bytes(i) == 1) {
+			charsReadVect.push_back(charsRead.substr(i, 1));
+			++i;	
+		} else if (bytes(i) == 2) {
+			charsReadVect.push_back(charsRead.substr(i, 2));
+			i += 2;
+		} else if (bytes(i) == 3) {
+			charsReadVect.push_back(charsRead.substr(i, 3));
+			i += 3;
+		} else if (bytes(i) == 4) {
+			charsReadVect.push_back(charsRead.substr(i, 4));
+			i += 4;
+		}
+	}
 }
 
 void U::append(string extra) {
-	charsRead += extra;
+	/*for (int i = 0; i < extra.length(); i++) {
+		if (bytes(i) == 1) {
+			
+		}
+	}*/
+	charsRead+=extra;
 }
 
 // State how many characters read thus far
 int U::size() const {
 	//char byte;
-	int size = 0;
+	/* int size = 0;
 
 	for (unsigned int i = 0; i < charsRead.length(); i++) {
 		//byte = charsRead.at(i);
@@ -164,9 +188,9 @@ int U::size() const {
 			i += 3;
 
 		size++;
-	}
+	} */
 	
-	return size;		// can't return charsRead.length() b/c that is the length in bytes not actual characters
+	return charsReadVect.size();;		// return length of the vector
 }
 
 // Get all chars read thus far
@@ -181,7 +205,7 @@ string U::get(int index) const {
 		oss << "Invalid index: " << index << " ( valid range: [0," << this->size() << ") )";
 		throw oss.str();
 	}
-	return this->get(index, index + 1);
+	return charsReadVect.at(index);
 }
 
 // Determines byte length of character
@@ -207,7 +231,7 @@ int U::bytes(int index) const {
 
 // Get chars from start to end
 string U::get(int start, int end) const {
-	int count = 0;
+	/*int count = 0;
 	int index = 0;
 	string res = "";
 
@@ -272,6 +296,14 @@ string U::get(int start, int end) const {
 
 			index++;
 		}
+	} */
+
+	// 2 options:
+	// (1) loop through string and get correct # of bytes for a character, then increment the index by the # of bytes
+	// (2) loop through vector from start to end and concatenate a result string
+	string res = "";
+	for (int i = start; i < end; ++i) {
+		res += charsReadVect.at(i);
 	}
 
 	return res;
@@ -333,6 +365,7 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 int U::codepoint(int index) const {
 	string charac = get(index);
 	return convUTF(charac.at(0), charac);
+	
 }
 
 // Return true if charsRead is empty

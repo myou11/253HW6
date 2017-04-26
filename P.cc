@@ -14,11 +14,22 @@ using namespace std;
 P::P() { /* Do nothing */ }
 
 // Copy ctor
-P::P(const P &rhs) : propsMap(rhs.propsMap), propsSet(rhs.propsSet) { }	//copy rhs's class members to obj being constructed currently
+P::P(const P &rhs) : propsMap(rhs.propsMap), countMap(rhs.countMap),
+					 propsSet(rhs.propsSet),  propOpened(rhs.propOpened) { }	//copy rhs's class members to obj being constructed currently
 
 // String ctor
 P::P(string filename) {
 	readfile(filename);
+}
+
+const P & P::operator=(const P &rhs) {
+	if (this != &rhs) {				// alias test, so we obj doesn't copy to itself
+		propsMap = rhs.propsMap;
+		countMap = rhs.countMap;
+		propsSet = rhs.propsSet;
+		propOpened = rhs.propOpened;
+	}
+	return *this;					// return the object this
 }
 
 // Dtor
@@ -99,6 +110,8 @@ void P::count(int codepoint) {
 
 // Count occurences of times that characters with prop have been encountered
 int P::count(string prop) const {
+	if (countMap.count(prop) == 0)	// if property is not in the map (invalid property), return a count of 0
+		return 0;
 	return countMap.at(prop);
 }
 

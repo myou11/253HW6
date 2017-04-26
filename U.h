@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 class U {
 
@@ -69,7 +70,8 @@ class U {
 
 	private:
 
-		std::string charsRead; 		// stores all characters read thus far
+		std::string charsRead; 						// stores all characters read thus far
+		std::vector<std::string> charsReadVect;		// stores UTF8 characters in each index
 };
 
 #endif
