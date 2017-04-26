@@ -231,76 +231,6 @@ int U::bytes(int index) const {
 
 // Get chars from start to end
 string U::get(int start, int end) const {
-	/*int count = 0;
-	int index = 0;
-	string res = "";
-
-	int size = this->size();
-	
-	if ( end > size || start < 0 || end < start ) {
-		ostringstream oss;
-		oss << "Indices start and end are an invalid range ( valid range: [0," << size << "] )";
-		throw oss.str();
-	}
-
-	if (start == end)
-		return res;
-
-	while ( index != (end) ) {
-		
-		if (index == start) {
-			while (index < end) {
-				if (bytes(count) == 1) {
-					res += charsRead.at(count);
-					count++;
-				}
-				else if (bytes(count) == 2) {
-					res += charsRead.at(count);
-					count++;
-					res += charsRead.at(count);
-					count++;
-				}
-				else if (bytes(count) == 3) {
-					res += charsRead.at(count);
-					count++;
-					res += charsRead.at(count);
-					count++;
-					res += charsRead.at(count);
-					count++;
-				}
-				else if (bytes(count) == 4) {
-					res += charsRead.at(count);
-					count++;
-					res += charsRead.at(count);
-					count++;
-					res += charsRead.at(count);
-					count++;
-					res += charsRead.at(count);
-					count++;
-				}
-				index++;
-			}
-		} else {
-			
-			if (bytes(count) == 1)
-				count++;
-			
-			else if (bytes(count) == 2)
-				count += 2;
-			
-			else if (bytes(count) == 3)
-				count += 3;
-
-			else if (bytes(count) == 4)
-				count += 4;
-
-			index++;
-		}
-	} */
-
-	// 2 options:
-	// (1) loop through string and get correct # of bytes for a character, then increment the index by the # of bytes
-	// (2) loop through vector from start to end and concatenate a result string
 	string res = "";
 	for (int i = start; i < end; ++i) {
 		res += charsReadVect.at(i);
@@ -365,7 +295,6 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 int U::codepoint(int index) const {
 	string charac = get(index);
 	return convUTF(charac.at(0), charac);
-	
 }
 
 // Return true if charsRead is empty
