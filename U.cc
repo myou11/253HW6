@@ -34,7 +34,7 @@ const U & U::operator=(const U & rhs) {
 U::~U( ) { }								// default destructor
 
 // Error check ifstream for failure
-void U::streamFail(ifstream & in, int byteNum, string filename) {
+void U::streamFail(ifstream & in, int byteNum, string filename) const {
 	if (in.fail()) {
 		ostringstream oss;
 		oss << "Byte " << byteNum << " was unable to be retrieved (doesn't exist) in file: " << filename;
@@ -43,10 +43,31 @@ void U::streamFail(ifstream & in, int byteNum, string filename) {
 }
 
 // Error check for invalid continuation byte
-void U::contByteFail(int byte, string filename) {
+void U::contByteFail(int byte) const {
 	if ( (byte & 0xC0) != 0x80 ) {
 		ostringstream oss;
-		oss << "0x" << hex << byte << " was not a valid continuation byte in file: " << filename;
+		oss << "0x" << hex << byte << " was not a valid continuation byte";
+		throw oss.str();
+	}
+}
+
+// Determines byte length of character
+int U::bytes(int byte) const {
+	if ( (byte & 0x80) == 0 )
+		return 1;
+		
+	else if ( (byte & 0xE0) == 0xC0 )
+		return 2;
+	
+	else if ( (byte & 0xF0) == 0xE0 )
+		return 3;
+
+	else if ( (byte & 0xF8) == 0xF0 )
+		return 4;
+
+	else {	// means byte is not valid UTF8 leading byte
+		ostringstream oss;
+		oss << "Not a valid UTF8 character. Bad leading byte: " << byte;
 		throw oss.str();
 	}
 }
@@ -57,64 +78,58 @@ void U::readUTF(int byte1, ifstream & in, string filename) {
 	char c; // to get the additional UTF bytes
 
 	// 1 byte
-	if ( (byte1 & 0x80) == 0 )
+	if (bytes(byte1) == 1)
 		charsRead += fbyte; // add first byte of char to charsRead
 
 	// 2 bytes
-	else if ( (byte1 & 0xE0) == 0xC0 ) {
+	else if (bytes(byte1) == 2) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 		
 		in.get(c);
 		streamFail(in, 2, filename);	// check if the stream failed to get a character
 		int byte2 = c;
-		contByteFail(byte2, filename);	// check if this is a valid continuation byte
+		contByteFail(byte2);	// check if this is a valid continuation byte
 		charsRead += c;
 	}
 
 	// 3 bytes
-	else if ( (byte1 & 0xF0) == 0xE0) {
-		charsRead += fbyte;	// add first byte of char to charsRead
+	else if (bytes(byte1) == 3) {
+		charsRead += fbyte;
 		
 		in.get(c);
 		streamFail(in, 2, filename);	
 		int byte2 = c;
-		contByteFail(byte2, filename);
+		contByteFail(byte2);
 		charsRead += c;
 
 		in.get(c);
 		streamFail(in, 3, filename);
 		int byte3 = c;
-		contByteFail(byte3, filename);
+		contByteFail(byte3);
 		charsRead += c;
 	}
 
 	// 4 bytes
-	else if ( (byte1 & 0xF8) == 0xF0 ) {
+	else if (bytes(byte1) == 4) {
 		charsRead += fbyte;	// add first byte of char to charsRead
 
 		in.get(c);
 		streamFail(in, 2, filename);
 		int byte2 = c;
-		contByteFail(byte2, filename);
+		contByteFail(byte2);
 		charsRead += c;
 
 		in.get(c);
 		streamFail(in, 3, filename);
 		int byte3 = c;
-		contByteFail(byte3, filename);
+		contByteFail(byte3);
 		charsRead += c;
 
 		in.get(c);
 		streamFail(in, 4, filename);
 		int byte4 = c;
-		contByteFail(byte4, filename);
+		contByteFail(byte4);
 		charsRead += c;
-	}
-
-	else {
-		ostringstream oss;
-		oss << "0x" << hex << byte1 << " was not a valid leading UTF8 byte in file: " << filename;
-		throw oss.str();
 	}
 }
 
@@ -143,16 +158,16 @@ void U::readfile(string filename) {
 
 	// Create vector from this accumulated string
 	for (uint i = 0; i < charsRead.length(); /* leave incrementing work for body of loop */) {
-		if (bytes(i) == 1) {
-			charsReadVect.push_back(charsRead.substr(i, 1));
-			++i;	
-		} else if (bytes(i) == 2) {
+		if (bytes(charsRead.at(i)) == 1) {						// evaluate # of bytes a character consists of
+			charsReadVect.push_back(charsRead.substr(i, 1));	// add the char to the vector (no need to error check since readUTF already did)
+			++i;												// incr once because char was 1 byte
+		} else if (bytes(charsRead.at(i)) == 2) {
 			charsReadVect.push_back(charsRead.substr(i, 2));
 			i += 2;
-		} else if (bytes(i) == 3) {
+		} else if (bytes(charsRead.at(i)) == 3) {
 			charsReadVect.push_back(charsRead.substr(i, 3));
 			i += 3;
-		} else if (bytes(i) == 4) {
+		} else if (bytes(charsRead.at(i)) == 4) {
 			charsReadVect.push_back(charsRead.substr(i, 4));
 			i += 4;
 		}
@@ -160,37 +175,55 @@ void U::readfile(string filename) {
 }
 
 void U::append(string extra) {
-	/*for (int i = 0; i < extra.length(); i++) {
-		if (bytes(i) == 1) {
+	string utfChar;		// stores all bytes of UTF8 character as a string
+	for (uint i = 0; i < extra.length(); /* let loop body incr */) {
+
+		/* These conditional will run convUTF based on the # of bytes a character is
+		 * convUTF is passed the current character (which should be the start of a UTF8 charac)
+		 * and it will pass it the rest of the character's bytes too
+		 * The index, i, gets incremented accordingly based on # of bytes
+		 */
+
+		if (bytes(extra.at(i)) == 1) {			// evaluate # of bytes a character consists of
+			utfChar = extra.substr(i, 1);		// get 1 character from string
+			convUTF(extra.at(i), utfChar);		// use convUTF to check for invalid UTF8 char
 			
+			charsRead += utfChar;				// add the char to the accumulated string
+			charsReadVect.push_back(utfChar);	// add the char to the vector
+
+			++i;								// incr once because char was 1 byte
+		} else if (bytes(extra.at(i)) == 2) {
+			utfChar = extra.substr(i, 2);
+			convUTF(extra.at(i), utfChar);
+
+			charsRead += utfChar;
+			charsReadVect.push_back(utfChar);
+
+			i += 2;
+		} else if (bytes(extra.at(i)) == 3) {
+			utfChar = extra.substr(i, 3);
+			convUTF(extra.at(i), extra.substr(i, 3));
+
+			charsRead += utfChar;
+			charsReadVect.push_back(utfChar);
+
+			i += 3;
+		} else if (bytes(extra.at(i)) == 4) {
+			utfChar = extra.substr(i, 4);
+			convUTF(extra.at(i), extra.substr(i, 4));
+
+			charsRead += utfChar;
+			charsReadVect.push_back(utfChar);
+
+			i += 4;
 		}
-	}*/
-	charsRead+=extra;
+		// no need to error check since convUTF() and bytes() will take care of that
+	}
 }
 
 // State how many characters read thus far
 int U::size() const {
-	//char byte;
-	/* int size = 0;
-
-	for (unsigned int i = 0; i < charsRead.length(); i++) {
-		//byte = charsRead.at(i);
-		// convUTF(byte, charsRead, i);	// will modify i
-		if (bytes(i) == 1) {
-			// don't incr i since char is 1 byte and loop will do it
-			//size++;
-		}
-		else if (bytes(i) == 2)
-			i += 1;
-		else if (bytes(i) == 3)
-			i += 2;
-		else if (bytes(i) == 4)
-			i += 3;
-
-		size++;
-	} */
-	
-	return charsReadVect.size();;		// return length of the vector
+	return charsReadVect.size();		// return length of the vector
 }
 
 // Get all chars read thus far
@@ -202,35 +235,27 @@ string U::get() const {
 string U::get(int index) const {
 	if (index > (this->size() - 1) || index < 0) {
 		ostringstream oss;
-		oss << "Invalid index: " << index << " ( valid range: [0," << this->size() << ") )";
+		oss << "Invalid index: " << index << " (valid range: [0," << this->size() << "))";
 		throw oss.str();
 	}
 	return charsReadVect.at(index);
 }
 
-// Determines byte length of character
-int U::bytes(int index) const {
-	if ( (charsRead.at(index) & 0x80) == 0 )
-		return 1;
-		
-	else if ( (charsRead.at(index) & 0xE0) == 0xC0 )
-		return 2;
-	
-	else if ( (charsRead.at(index) & 0xF0) == 0xE0 )
-		return 3;
 
-	else if ( (charsRead.at(index) & 0xF8) == 0xF0 )
-		return 4;
-
-	else {	// means byte is not valid UTF8 leading byte
-		ostringstream oss;
-		oss << "Not a valid UTF8 character. Bad leading byte: " << charsRead.at(index);
-		throw oss.str();
-	}
-}
 
 // Get chars from start to end
 string U::get(int start, int end) const {
+	if (start < 0 || end > (this->size() - 1)) {
+		ostringstream oss;
+		if (start < 0 && end > this->size() - 1)
+			oss << "Invalid indices: (" << start << ", " << end << ") (valid range: [0," << this->size() << "))";
+		else if (start < 0)
+			oss << "Invalid index: " << start << " (valid range: [0," << this->size() << "))";
+		else 
+			oss << "Invalid index: " << end << " (valid range: [0," << this->size() << "))";
+		throw oss.str();
+	}
+	
 	string res = "";
 	for (int i = start; i < end; ++i) {
 		res += charsReadVect.at(i);
@@ -249,6 +274,7 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 	if ( (byte1 & 0xE0) == 0xC0 ) {
 		c = charac.at(1);
 		int byte2 = c;
+		contByteFail(byte2);
 
 		byte1 = (byte1 << 6) & 0x7C0;
 		byte2 = byte2 & 0x3F;
@@ -259,9 +285,11 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 	if ( (byte1 & 0xF0) == 0xE0) {
 		c = charac.at(1);
 		int byte2 = c;
+		contByteFail(byte2);
 
 		c = charac.at(2);
 		int byte3 = c;
+		contByteFail(byte3);
 
 		byte1 = (byte1 << 12) & 0xF000; // shift to bits 15-12, mask upper 4 bits
 		byte2 = (byte2 << 6) & 0xFC0;   // shift to bits 11-6, mask bits 12-7
@@ -273,12 +301,16 @@ int U::convUTF(int byte1, string charac) const {	// index is passed by reference
 	if ( (byte1 & 0xF8) == 0xF0 ) {
 		c = charac.at(1);
 		int byte2 = c;
+		contByteFail(byte2);
 
 		c = charac.at(2);
 		int byte3 = c;
+		contByteFail(byte3);
 
 		c = charac.at(3);
 		int byte4 = c;
+		contByteFail(byte4);
+
 
 		byte1 = (byte1 & 0x07) << 18; // get lower 3 bits of 1st byte, shift to bits 20-18
 		byte2 = (byte2 & 0x3F) << 12; // get lower 6 bits of 2nd byte, shift to bits 17-12

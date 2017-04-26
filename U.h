@@ -27,10 +27,13 @@ class U {
 		~U();
 
 		// Error check ifstream for failure
-		void streamFail(std::ifstream &in, int byteNum, std::string filename);
+		void streamFail(std::ifstream &in, int byteNum, std::string filename) const;
 
 		// Error check for invalid continuation byte
-		void contByteFail(int byte, std::string filename);
+		void contByteFail(int byte) const;
+
+		// Determines byte length of character
+		int bytes(int index) const;
 
 		// Modified convUTF for reading from a stream and checking valid chars
 		void readUTF(int byte1, std::ifstream &in, std::string filename);
@@ -49,9 +52,6 @@ class U {
 
 		// Get char at index
 		std::string get(int index) const;
-
-		// Determines byte length of character
-		int bytes(int index) const;
 
 		// Get chars from start to end
 		std::string get(int start, int end) const;

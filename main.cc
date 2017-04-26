@@ -34,6 +34,11 @@ int main() {
 		} catch (const string &s) {
 			cout << "Should be error: " << s << '\n';
 		}
+		try {
+			u.get(-1,9);
+		} catch (const string &s) {
+			cout << "Should be error: " << s << '\n';
+		}
 		
 		// append TODO: WHAT ARE THE WAYS THIS CAN FAIL?? SEE DESKTOP NOTE
 		cout << "Before: " << u.get() << '\n';
@@ -57,7 +62,7 @@ int main() {
 
 		// codepoint
 		cout << "Should be ≠: " << u.get(5) << '\n';
-		cout << "Should be 2260 converted to dec (8800): " << u.codepoint(5) << '\n'; 	// TODO: WHY ISNT THIS WORKING?
+		cout << "Should be 2260 converted to dec (8800): " << u.codepoint(5) << '\n';
 		cout << "Should be 97: " << u.codepoint(0) << '\n';
 		cout << "Should be 179: " << u.codepoint(1) << '\n';
 		cout << "Should be 99: " << u.codepoint(6) << '\n';
