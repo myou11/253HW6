@@ -241,8 +241,6 @@ string U::get(int index) const {
 	return charsReadVect.at(index);
 }
 
-
-
 // Get chars from start to end
 string U::get(int start, int end) const {
 	if (start < 0 || end > (this->size() - 1)) {
@@ -331,10 +329,11 @@ int U::codepoint(int index) const {
 
 // Return true if charsRead is empty
 bool U::empty() const {
-	return (charsRead.length() == 0);
+	return charsReadVect.empty();
 }
 
 // Clear charsRead
 void U::clear() {
 	charsRead = "";
+	charsReadVect.clear();
 }
